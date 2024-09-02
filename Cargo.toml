@@ -1,27 +1,6 @@
-[package]
-name = "smash"
-version = "0.0.1"
-authors = ["Jian Chen <admin@chensoft.com>"]
-edition = "2021"
-description = "Placeholder"
-documentation = "https://docs.rs/smash"
-readme = "README.md"
-repository = "https://github.com/chensoft/smash"
-license = "MIT"
-keywords = []
-
-[dependencies]
-tokio = { version = "1.40", features = ["full"] }
-thiserror = "1.0"
-async-trait = "0.1"
-
-[dev-dependencies]
-criterion = { version = "0.5", features = ["async_tokio"] }
-
-[[bench]]
-name = "playground"
-harness = false
-
-[[bench]]
-name = "benchmark"
-harness = false
+[workspace]
+resolver = "2"
+members = [
+    "smash",
+#    "smash-derive"
+]
