@@ -1,3 +1,5 @@
+use smash::{Actor, Event};
+
 /// A Message
 struct Ping(&'static str);
 
@@ -7,41 +9,32 @@ struct Echo {
     count: usize,
 }
 
-impl Echo {
-    async fn new(xxx: (i32, i32)) -> Self { todo!() }
+impl Actor for Echo {
+    type Arg = ();
+    type Err = ();
+
+    async fn new(arg: Self::Arg) -> Result<Self, Self::Err> {
+        todo!()
+    }
+
+    async fn stop(&mut self, err: Option<Self::Err>) {
+        todo!()
+    }
 }
 
-// trait Event<M> {
-//     type Output;
-// 
-//     fn handle(&self, msg: T) -> Self::Output;
-// }
-// 
-// struct Init;
-// struct Quit;
-// struct Stop;
+impl Event<Ping> for Echo {
+    type Output = ();
 
-// trait Actor {
-//     type Arg;
-//     type Err;
-// 
-//     async fn new(arg: Self::Arg) -> Result<Self, Self::Err> { todo!() }
-//     async fn init() -> Result<(), Self::Err> { Ok(()) }
-//     async fn quit() -> Result<bool, Self::Err> { Ok(true) }
-//     async fn stop() {}
-// }
+    async fn handle(&mut self, msg: Ping) -> Self::Output {
+        todo!()
+    }
+}
 
 #[tokio::main]
 async fn main() {
-    let kind = 1;
-    let args = b"xxx".as_ref();
-    
+    let mut echo = Echo { count: 0 };
+    echo.handle(Ping("abc")).await;
 
-
-    if kind == 1 {
-        let x = Echo::new(bincode::deserialize(args).unwrap()).await;
-    }
-    
 //     let echo = smash::spawn!(Echo, 0);
 //     let pong = echo.call(Ping("hi")).await;
 //
