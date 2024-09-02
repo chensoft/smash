@@ -13,4 +13,4 @@ pub mod error;
 pub mod linkq;
 pub mod redix;
 
-pub use actor::{Actor, Event};
+pub use actor::{Actor, Event, Proxy};
