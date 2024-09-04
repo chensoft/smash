@@ -16,17 +16,28 @@ macro_rules! spawn {
 }
 
 #[macro_export]
+macro_rules! running {
+    () => {{
+        $crate::actor::RUNNING.try_with(|v| v.as_ref().downcast_ref::<$crate::Proxy<Self>>().cloned()).ok().flatten().unwrap()
+    }};
+
+    ($actor:ident) => {{
+        $crate::actor::RUNNING.try_with(|v| v.as_ref().downcast_ref::<$crate::Proxy<$actor>>().cloned()).ok().flatten()
+    }};
+}
+
+#[macro_export]
 macro_rules! run {
     () => {{
         $crate::actor::AGENT.run().await
-    }}
+    }};
 }
 
 #[macro_export]
 macro_rules! stop {
     () => {{
         $crate::actor::AGENT.stop()
-    }}
+    }};
 }
 
 pub static AGENT: LazyLock<Agent> = LazyLock::new(|| {
@@ -42,7 +53,7 @@ impl Agent {
         let mut twice = false;
 
         loop {
-            tokio::select! {
+            select! {
                 _ = check.tick() => {
                     if self.0.receiver_count() <= 1 { // todo 1?
                         break;

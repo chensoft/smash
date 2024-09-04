@@ -1,5 +1,5 @@
 #[allow(async_fn_in_trait)]
-pub trait Actor: Sized {
+pub trait Actor: Sized + 'static {
     type Arg;
     type Err;
 

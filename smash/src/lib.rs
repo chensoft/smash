@@ -4,6 +4,7 @@
 #![deny(clippy::expect_used)]
 #![deny(clippy::let_underscore_future)]
 
+#[macro_use] extern crate tokio;
 #[macro_use] extern crate serde;
 #[macro_use] extern crate thiserror;
 #[macro_use] extern crate async_trait;
