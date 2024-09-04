@@ -1,4 +1,4 @@
-use smash::{Actor, Event};
+use smash::{Actor, Event, Proxy};
 
 /// A Message
 struct Ping(&'static str);
@@ -10,7 +10,7 @@ struct Echo {
 }
 
 impl Actor for Echo {
-    type Arg = ();
+    type Arg = i32;
     type Err = ();
 
     async fn new(arg: Self::Arg) -> Result<Self, Self::Err> {
@@ -31,14 +31,14 @@ impl Event<Ping> for Echo {
 }
 
 #[tokio::main]
-async fn main() {
-    let mut echo = Echo { count: 0 };
-    echo.handle(Ping("abc")).await;
+async fn main() -> Result<(), ()> {
+    let mut echo = smash::spawn!(Echo, 111)?;
+    // echo.send(Ping("abc")).await?;
 
 //     let echo = smash::spawn!(Echo, 0);
 //     let pong = echo.call(Ping("hi")).await;
 //
 //     assert_eq!(pong, "hi");
-//
-//     smash::run();
+
+    Ok(smash::run!())
 }
