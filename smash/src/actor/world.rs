@@ -11,7 +11,7 @@ macro_rules! spawn {
     }};
 
     ($actor:ident, $arg:expr, $udata:expr) => {{
-        $crate::actor::Owner::<$actor>::new($arg, $crate::actor::AGENT.1.clone()).await
+        $crate::actor::Owner::<$actor>::new($arg, $crate::actor::WORLD.1.clone()).await
     }};
 }
 
@@ -29,25 +29,25 @@ macro_rules! running {
 #[macro_export]
 macro_rules! run {
     () => {{
-        $crate::actor::AGENT.run().await
+        $crate::actor::WORLD.run().await
     }};
 }
 
 #[macro_export]
 macro_rules! stop {
     () => {{
-        $crate::actor::AGENT.stop()
+        $crate::actor::WORLD.stop()
     }};
 }
 
-pub static AGENT: LazyLock<Agent> = LazyLock::new(|| {
+pub static WORLD: LazyLock<World> = LazyLock::new(|| {
     let (tx, rx) = watch::channel(());
-    Agent(tx, rx)
+    World(tx, rx)
 });
 
-pub struct Agent(pub watch::Sender<()>, pub watch::Receiver<()>);
+pub struct World(pub watch::Sender<()>, pub watch::Receiver<()>);
 
-impl Agent {
+impl World {
     pub async fn run(&self) {
         let mut check = time::interval(time::Duration::from_secs(1));
         let mut twice = false;

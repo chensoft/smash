@@ -1,11 +1,9 @@
 mod actor;
-mod event;
 mod proxy;
 mod owner;
-mod agent;
+mod world;
 
 pub use actor::*;
-pub use event::*;
 pub use proxy::*;
 pub use owner::*;
-pub use agent::*;
+pub use world::*;

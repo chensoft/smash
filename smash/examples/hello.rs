@@ -1,39 +1,44 @@
-use smash::{Actor, Event, Proxy};
+use smash::*;
+use async_trait::*;
 
 /// A Message
 struct Ping(&'static str);
 
+impl Message for Ping {
+}
+
 /// The Actor
-// #[derive(Actor)]
 struct Echo {
     count: usize,
 }
 
+#[async_trait]
 impl Actor for Echo {
-    type Arg = i32;
+    type Arg = usize;
     type Err = ();
 
     async fn new(arg: Self::Arg) -> Result<Self, Self::Err> {
-        todo!()
+        Ok(Self { count: arg })
     }
 
     async fn stop(&mut self, err: Option<Self::Err>) {
-        todo!()
+        println!("stop");
     }
 }
 
-impl Event<Ping> for Echo {
+#[async_trait]
+impl Handler<Ping> for Echo {
     type Output = ();
 
     async fn handle(&mut self, msg: Ping) -> Self::Output {
-        todo!()
+        println!("ping");
     }
 }
 
 #[tokio::main]
 async fn main() -> Result<(), ()> {
     let mut echo = smash::spawn!(Echo, 111)?;
-    // echo.send(Ping("abc")).await?;
+    let _ = echo.send(Ping("abc")).await;
 
 //     let echo = smash::spawn!(Echo, 0);
 //     let pong = echo.call(Ping("hi")).await;

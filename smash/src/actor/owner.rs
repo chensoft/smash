@@ -10,7 +10,7 @@ task_local! {
 
 pub struct Owner<A: Actor> {
     actor: A,
-    mailbox: mpsc::Receiver<()>,
+    mailbox: mpsc::Receiver<BoxLetter<A>>,
     sigstop: watch::Receiver<()>,
     sigquit: watch::Receiver<()>,
     sigkill: watch::Receiver<()>,
