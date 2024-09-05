@@ -1,20 +1,17 @@
 use crate::error::*;
-use super::actor::*;
+use super::types::*;
 
-use std::marker::PhantomData;
-use tokio::sync::{mpsc, watch, oneshot};
+use tokio::sync::{mpsc, oneshot};
 
 pub struct Proxy<A: Actor> {
     mailbox: mpsc::Sender<BoxLetter<A>>,
-    sigquit: watch::Sender<()>, // todo combine to control
-    sigkill: watch::Sender<()>,
-
-    _marker: PhantomData<A>
+    sigquit: mpsc::Sender<()>,
+    sigkill: mpsc::Sender<()>,
 }
 
 impl<A: Actor> Proxy<A> {
-    pub fn new(mailbox: mpsc::Sender<BoxLetter<A>>, sigquit: watch::Sender<()>, sigkill: watch::Sender<()>) -> Self {
-        Self { mailbox, sigquit, sigkill, _marker: PhantomData::default() }
+    pub fn new(mailbox: mpsc::Sender<BoxLetter<A>>, sigquit: mpsc::Sender<()>, sigkill: mpsc::Sender<()>) -> Self {
+        Self { mailbox, sigquit, sigkill }
     }
 
     pub async fn send<M>(&self, msg: M) -> Result<(), Error>
@@ -25,28 +22,30 @@ impl<A: Actor> Proxy<A> {
         Ok(self.mailbox.send(Envelope::new(msg, None)).await?)
     }
 
-    pub async fn call<M>(&self, msg: M) -> Result<A::Output, Error>
+    pub async fn tell<M>(&self, msg: M) -> Result<oneshot::Receiver<A::Output>, Error>
     where
         A: Handler<M>,
         M: Message,
     {
         let (snd, rcv) = oneshot::channel();
         self.mailbox.send(Envelope::new(msg, Some(snd))).await?;
-        Ok(rcv.await?)
+        Ok(rcv)
     }
 
-    pub fn quit(&self) -> Result<(), ()> {
-        //     match &self.mailbox {
-        //         Some(mailbox) => Ok(mailbox.send(Event::Quit).await?),
-        //         None => Ok(())
-        //     }
-        todo!()
+    pub async fn call<M>(&self, msg: M) -> Result<A::Output, Error>
+    where
+        A: Handler<M>,
+        M: Message,
+    {
+        Ok(self.tell(msg).await?.await?)
     }
 
-    pub fn kill(&self) -> Result<(), ()> {
-        //     self.sigkill.as_ref().map(|sig| sig.send(()));
-        //     Ok(())
-        todo!()
+    pub fn quit(&self) {
+        let _ = self.sigquit.try_send(());
+    }
+
+    pub fn kill(&self) {
+        let _ = self.sigkill.try_send(());
     }
 }
 
@@ -56,7 +55,6 @@ impl<A: Actor> Clone for Proxy<A> {
             mailbox: self.mailbox.clone(),
             sigquit: self.sigquit.clone(),
             sigkill: self.sigkill.clone(),
-            _marker: self._marker.clone(),
         }
     }
 }

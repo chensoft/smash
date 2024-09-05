@@ -1,10 +1,10 @@
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("{0}")]
-    SendError(Box<dyn std::error::Error>),
+    SendError(String),
 
     #[error("{0}")]
-    RecvError(Box<dyn std::error::Error>),
+    RecvError(String),
 
     #[error("Closed")]
     Closed,
@@ -13,11 +13,17 @@ pub enum Error {
     Timeout,
 }
 
-use tokio::sync::mpsc::error::SendError;
+use tokio::sync::mpsc::error::{TrySendError, SendError};
 
-impl<T: 'static> From<SendError<T>> for Error {
+impl<T> From<TrySendError<T>> for Error {
+    fn from(value: TrySendError<T>) -> Self {
+        Self::SendError(value.to_string())
+    }
+}
+
+impl<T> From<SendError<T>> for Error {
     fn from(value: SendError<T>) -> Self {
-        Self::SendError(Box::new(value))
+        Self::SendError(value.to_string())
     }
 }
 
@@ -25,6 +31,6 @@ use tokio::sync::oneshot::error::RecvError;
 
 impl From<RecvError> for Error {
     fn from(value: RecvError) -> Self {
-        Self::RecvError(Box::new(value))
+        Self::RecvError(value.to_string())
     }
 }

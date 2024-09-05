@@ -1,49 +1,46 @@
-use smash::*;
+use smash::{Actor, Handler, Message};
 use async_trait::*;
 
 /// A Message
 struct Ping(&'static str);
 
-impl Message for Ping {
-}
+impl Message for Ping {}
 
 /// The Actor
 struct Echo {
-    count: usize,
+    id: i32,
 }
 
 #[async_trait]
 impl Actor for Echo {
-    type Arg = usize;
-    type Err = ();
+    type Arg = i32;
+    type Err = anyhow::Error;
 
     async fn new(arg: Self::Arg) -> Result<Self, Self::Err> {
-        Ok(Self { count: arg })
+        Ok(Self { id: arg })
     }
 
     async fn stop(&mut self, err: Option<Self::Err>) {
-        println!("stop");
+        println!("stop {err:?}");
     }
 }
 
 #[async_trait]
 impl Handler<Ping> for Echo {
-    type Output = ();
+    type Output = String;
 
     async fn handle(&mut self, msg: Ping) -> Self::Output {
-        println!("ping");
+        println!("{} {}", self.id, msg.0);
+        msg.0.to_string()
     }
 }
 
 #[tokio::main]
-async fn main() -> Result<(), ()> {
-    let mut echo = smash::spawn!(Echo, 111)?;
-    let _ = echo.send(Ping("abc")).await;
+async fn main() -> anyhow::Result<()> {
+    let echo = smash::spawn!(Echo, 1)?;
+    let pong = echo.call(Ping("hi")).await?;
 
-//     let echo = smash::spawn!(Echo, 0);
-//     let pong = echo.call(Ping("hi")).await;
-//
-//     assert_eq!(pong, "hi");
+    assert_eq!(pong, "hi");
 
     Ok(smash::run!())
 }

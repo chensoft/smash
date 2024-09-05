@@ -2,8 +2,8 @@ use tokio::sync::oneshot;
 
 #[async_trait]
 pub trait Actor: Sized + Send + 'static {
-    type Arg;
-    type Err;
+    type Arg: Send + 'static;
+    type Err: Send + 'static;
 
     async fn new(arg: Self::Arg) -> Result<Self, Self::Err>;
     async fn quit(&mut self) -> Result<bool, Self::Err> { Ok(true) }
@@ -21,17 +21,17 @@ pub trait Message: Send + 'static {}
 
 #[async_trait]
 pub trait Letter<A: Actor> {
-    async fn handle(self, act: &mut A);
+    async fn handle(&mut self, act: &mut A);
 }
 
-pub type BoxLetter<A> = Box<dyn Letter<A>>;
+pub type BoxLetter<A> = Box<dyn Letter<A> + Send + 'static>;
 
 pub struct Envelope<A, M>
 where
     A: Actor + Handler<M>,
     M: Message,
 {
-    msg: M,
+    msg: Option<M>,
     snd: Option<oneshot::Sender<A::Output>>,
 }
 
@@ -41,7 +41,7 @@ where
     M: Message
 {
     pub fn new(msg: M, snd: Option<oneshot::Sender<A::Output>>) -> Box<Self> {
-        Box::new(Self { msg, snd })
+        Box::new(Self { msg: Some(msg), snd })
     }
 }
 
@@ -51,9 +51,14 @@ where
     A: Actor + Handler<M>,
     M: Message,
 {
-    async fn handle(self, act: &mut A) {
-        let ret = act.handle(self.msg).await;
-        if let Some(snd) = self.snd {
+    async fn handle(&mut self, act: &mut A) {
+        let Some(msg) = self.msg.take() else {
+            return;
+        };
+
+        let ret = act.handle(msg).await;
+
+        if let Some(snd) = self.snd.take() {
             let _ = snd.send(ret);
         }
     }

@@ -1,9 +1,9 @@
-mod actor;
+mod types;
 mod proxy;
 mod owner;
 mod world;
 
-pub use actor::*;
+pub use types::*;
 pub use proxy::*;
 pub use owner::*;
 pub use world::*;
