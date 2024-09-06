@@ -13,15 +13,16 @@ struct Echo {
 
 #[async_trait]
 impl Actor for Echo {
-    type Arg = i32;
+    type Arg = ();
     type Err = anyhow::Error;
 
-    async fn new(arg: Self::Arg) -> Result<Self, Self::Err> {
-        Ok(Self { id: arg })
+    async fn started(&mut self, arg: Self::Arg) -> Result<(), Self::Err> {
+        println!("started {arg:?}");
+        Ok(())
     }
 
     async fn stopped(&mut self, err: Option<Self::Err>) {
-        println!("stop {err:?}");
+        println!("stopped {err:?}");
     }
 }
 
@@ -37,7 +38,7 @@ impl Handler<Ping> for Echo {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let echo = smash::spawn!(Echo, 1)?;
+    let echo = smash::spawn!(Echo { id: 1 });
     let pong = echo.call(Ping("hi")).await?;
 
     assert_eq!(pong, "hi");

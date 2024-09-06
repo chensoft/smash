@@ -1,14 +1,14 @@
 use tokio::sync::oneshot;
 
 #[async_trait]
+#[allow(unused_variables)]
 pub trait Actor: Sized + Send + 'static {
     type Arg: Send + 'static;
     type Err: Send + 'static;
 
-    async fn new(arg: Self::Arg) -> Result<Self, Self::Err>;
-    async fn started(&mut self) -> Result<(), Self::Err> { Ok(()) }
+    async fn started(&mut self, arg: Self::Arg) -> Result<(), Self::Err> { Ok(()) }
     async fn stopping(&mut self) -> Result<bool, Self::Err> { Ok(true) }
-    async fn stopped(&mut self, err: Option<Self::Err>);
+    async fn stopped(&mut self, err: Option<Self::Err>) {}
 }
 
 #[async_trait]

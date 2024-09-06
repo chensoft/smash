@@ -6,23 +6,31 @@ use std::sync::LazyLock;
 
 #[macro_export]
 macro_rules! spawn {
-    ($actor:path, $arg:expr) => {{
-        $crate::spawn!($actor, $arg, ())
+    ($actor:expr) => {{
+        $crate::spawn!($actor, ())
     }};
 
-    ($actor:path, $arg:expr, $udata:expr) => {{
-        $crate::actor::Owner::<$actor>::new($arg, $crate::actor::WORLD.1.clone()).await
+    ($actor:expr, $arg:expr) => {{
+        let (owner, proxy) = $crate::actor::Owner::new($actor, $crate::actor::WORLD.1.clone());
+        tokio::spawn(owner.boot($arg));
+        proxy
+    }};
+
+    ($actor:expr, $arg:expr, $tweak:expr) => {{
+        let (owner, proxy) = $crate::actor::Owner::new($actor, $crate::actor::WORLD.1.clone());
+        tokio::spawn($tweak(owner.boot($arg)));
+        proxy
     }};
 }
 
 #[macro_export]
 macro_rules! active {
     () => {{
-        $crate::actor::RUNNING.try_with(|v| v.as_ref().downcast_ref::<$crate::Proxy<Self>>().cloned()).ok().flatten().unwrap()
+        $crate::actor::ACTIVE.try_with(|v| v.as_ref().downcast_ref::<$crate::Proxy<Self>>().cloned()).ok().flatten().unwrap()
     }};
 
     ($actor:path) => {{
-        $crate::actor::RUNNING.try_with(|v| v.as_ref().downcast_ref::<$crate::Proxy<$actor>>().cloned()).ok().flatten()
+        $crate::actor::ACTIVE.try_with(|v| v.as_ref().downcast_ref::<$crate::Proxy<$actor>>().cloned()).ok().flatten()
     }};
 }
 
