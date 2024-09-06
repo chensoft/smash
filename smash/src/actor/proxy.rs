@@ -1,6 +1,7 @@
 use crate::error::*;
 use super::types::*;
 
+use std::sync::LazyLock;
 use tokio::sync::{mpsc, oneshot};
 
 pub struct Proxy<A: Actor> {
@@ -46,6 +47,18 @@ impl<A: Actor> Proxy<A> {
 
     pub fn kill(&self) {
         let _ = self.sigkill.try_send(());
+    }
+}
+
+impl<A: Actor> Default for Proxy<A> {
+    fn default() -> Self {
+        static DUMMY: LazyLock<mpsc::Sender<()>> = LazyLock::new(|| mpsc::channel(1).0);
+
+        Self {
+            mailbox: mpsc::channel(1).0,
+            sigquit: DUMMY.clone(),
+            sigkill: DUMMY.clone(),
+        }
     }
 }
 
