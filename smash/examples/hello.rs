@@ -20,7 +20,7 @@ impl Actor for Echo {
         Ok(Self { id: arg })
     }
 
-    async fn stop(&mut self, err: Option<Self::Err>) {
+    async fn stopped(&mut self, err: Option<Self::Err>) {
         println!("stop {err:?}");
     }
 }
