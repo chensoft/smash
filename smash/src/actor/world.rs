@@ -6,11 +6,11 @@ use std::sync::LazyLock;
 
 #[macro_export]
 macro_rules! spawn {
-    ($actor:ident, $arg:expr) => {{
+    ($actor:path, $arg:expr) => {{
         $crate::spawn!($actor, $arg, ())
     }};
 
-    ($actor:ident, $arg:expr, $udata:expr) => {{
+    ($actor:path, $arg:expr, $udata:expr) => {{
         $crate::actor::Owner::<$actor>::new($arg, $crate::actor::WORLD.1.clone()).await
     }};
 }
@@ -21,7 +21,7 @@ macro_rules! active {
         $crate::actor::RUNNING.try_with(|v| v.as_ref().downcast_ref::<$crate::Proxy<Self>>().cloned()).ok().flatten().unwrap()
     }};
 
-    ($actor:ident) => {{
+    ($actor:path) => {{
         $crate::actor::RUNNING.try_with(|v| v.as_ref().downcast_ref::<$crate::Proxy<$actor>>().cloned()).ok().flatten()
     }};
 }
