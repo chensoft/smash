@@ -6,6 +6,7 @@ pub trait Actor: Sized + Send + 'static {
     type Err: Send + 'static;
 
     async fn new(arg: Self::Arg) -> Result<Self, Self::Err>;
+    async fn started(&mut self) -> Result<(), Self::Err> { Ok(()) }
     async fn stopping(&mut self) -> Result<bool, Self::Err> { Ok(true) }
     async fn stopped(&mut self, err: Option<Self::Err>);
 }

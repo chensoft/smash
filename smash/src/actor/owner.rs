@@ -36,18 +36,30 @@ impl<A: Actor> Owner<A> {
 
     pub async fn run(mut self) {
         let mut error = None;
+        let mut start = false;
 
         loop {
+            if !start {
+                select! {
+                    result = self.actor.started() => {
+                        start = true;
+                        match result {
+                            Ok(_) => continue,
+                            Err(err) => break error = Some(err),
+                        }
+                    }
+                    _ = self.sigkill.recv() => break,
+                    _ = self.sigstop.changed() => break,
+                }
+            }
+
             let letter = select! {
                 letter = self.mailbox.recv() => letter,
                 _ = self.sigquit.recv() => {
                     match self.actor.stopping().await {
                         Ok(false) => continue,
                         Ok(true) => break,
-                        Err(err) => {
-                            error = Some(err);
-                            break;
-                        }
+                        Err(err) => break error = Some(err),
                     }
                 }
                 _ = self.sigkill.recv() => break,

@@ -16,7 +16,7 @@ macro_rules! spawn {
 }
 
 #[macro_export]
-macro_rules! running {
+macro_rules! active {
     () => {{
         $crate::actor::RUNNING.try_with(|v| v.as_ref().downcast_ref::<$crate::Proxy<Self>>().cloned()).ok().flatten().unwrap()
     }};
