@@ -51,6 +51,7 @@ impl<A: Actor> Owner<A> {
             _ = self.sigstop.changed() => {}
         }
 
+        #[allow(clippy::while_immutable_condition)]
         while start {
             let letter = select! {
                 letter = self.mailbox.recv() => letter,
