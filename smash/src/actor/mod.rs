@@ -8,8 +8,8 @@ pub use proxy::*;
 pub use owner::*;
 pub use world::*;
 
-pub async fn wait() {
-    WORLD.wait().await
+pub async fn join() {
+    WORLD.join().await
 }
 
 pub async fn stop() {

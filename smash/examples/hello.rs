@@ -41,5 +41,5 @@ async fn main() -> anyhow::Result<()> {
 
     assert_eq!(pong, "hi");
 
-    Ok(smash::wait().await)
+    Ok(smash::join().await)
 }

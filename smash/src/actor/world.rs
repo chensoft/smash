@@ -42,7 +42,7 @@ pub static WORLD: LazyLock<World> = LazyLock::new(|| {
 pub struct World(pub watch::Sender<()>, pub watch::Receiver<()>);
 
 impl World {
-    pub async fn wait(&self) {
+    pub async fn join(&self) {
         let mut check = time::interval(time::Duration::from_secs(1));
         let mut twice = false;
 
