@@ -34,20 +34,6 @@ macro_rules! active {
     }};
 }
 
-#[macro_export]
-macro_rules! run {
-    () => {{
-        $crate::actor::WORLD.run().await
-    }};
-}
-
-#[macro_export]
-macro_rules! stop {
-    () => {{
-        $crate::actor::WORLD.stop()
-    }};
-}
-
 pub static WORLD: LazyLock<World> = LazyLock::new(|| {
     let (tx, rx) = watch::channel(());
     World(tx, rx)
@@ -56,7 +42,7 @@ pub static WORLD: LazyLock<World> = LazyLock::new(|| {
 pub struct World(pub watch::Sender<()>, pub watch::Receiver<()>);
 
 impl World {
-    pub async fn run(&self) {
+    pub async fn wait(&self) {
         let mut check = time::interval(time::Duration::from_secs(1));
         let mut twice = false;
 
@@ -72,7 +58,7 @@ impl World {
                         break;
                     }
 
-                    self.stop();
+                    self.stop().await;
 
                     twice = true;
                 }
@@ -80,7 +66,7 @@ impl World {
         }
     }
 
-    pub fn stop(&self) {
+    pub async fn stop(&self) {
         let _ = self.0.send(());
     }
 }

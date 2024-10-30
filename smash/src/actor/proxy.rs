@@ -18,7 +18,7 @@ impl<A: Actor> Proxy<A> {
     pub async fn send<M>(&self, msg: M) -> Result<(), Error>
     where
         A: Handler<M>,
-        M: Message,
+        M: Send + 'static,
     {
         Ok(self.mailbox.send(Envelope::new(msg, None)).await?)
     }
@@ -26,7 +26,7 @@ impl<A: Actor> Proxy<A> {
     pub async fn tell<M>(&self, msg: M) -> Result<oneshot::Receiver<A::Output>, Error>
     where
         A: Handler<M>,
-        M: Message,
+        M: Send + 'static,
     {
         let (snd, rcv) = oneshot::channel();
         self.mailbox.send(Envelope::new(msg, Some(snd))).await?;
@@ -36,7 +36,7 @@ impl<A: Actor> Proxy<A> {
     pub async fn call<M>(&self, msg: M) -> Result<A::Output, Error>
     where
         A: Handler<M>,
-        M: Message,
+        M: Send + 'static,
     {
         Ok(self.tell(msg).await?.await?)
     }

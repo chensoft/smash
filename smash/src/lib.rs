@@ -13,6 +13,6 @@ pub mod error;
 pub mod linkq;
 pub mod redix;
 
-pub use actor::{Actor, Handler, Message, Proxy};
+pub use actor::{Actor, Handler, Proxy, wait, stop};
 
 // todo export tokio/async_trait using derive

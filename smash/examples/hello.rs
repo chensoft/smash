@@ -1,10 +1,8 @@
-use smash::{Actor, Handler, Message};
+use smash::{Actor, Handler};
 use async_trait::*;
 
 /// A Message
 struct Ping(&'static str);
-
-impl Message for Ping {}
 
 /// The Actor
 struct Echo {
@@ -43,5 +41,5 @@ async fn main() -> anyhow::Result<()> {
 
     assert_eq!(pong, "hi");
 
-    Ok(smash::run!())
+    Ok(smash::wait().await)
 }
