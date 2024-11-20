@@ -1,4 +1,4 @@
-use smash::{Actor, Handler};
+use smash::{Actor, Handler, error::Error};
 use async_trait::*;
 
 /// A Message
@@ -12,11 +12,16 @@ struct Echo {
 #[async_trait]
 impl Actor for Echo {
     type Arg = ();
-    type Err = anyhow::Error;
+    type Err = Error;
 
     async fn started(&mut self, arg: Self::Arg) -> Result<(), Self::Err> {
         println!("started {arg:?}");
         Ok(())
+    }
+
+    async fn stopping(&mut self, err: Option<Self::Err>) -> Result<bool, Self::Err> {
+        println!("stopping {err:?}");
+        Ok(true)
     }
 
     async fn stopped(&mut self, err: Option<Self::Err>) {
@@ -40,6 +45,8 @@ async fn main() -> anyhow::Result<()> {
     let pong = echo.call(Ping("hi")).await?;
 
     assert_eq!(pong, "hi");
+
+    echo.quit(Some(Error::Closed));
 
     Ok(smash::join().await)
 }

@@ -1,17 +1,16 @@
 use crate::error::*;
 use super::types::*;
 
-use std::sync::LazyLock;
 use tokio::sync::{mpsc, oneshot};
 
 pub struct Proxy<A: Actor> {
     mailbox: mpsc::Sender<BoxLetter<A>>,
-    sigquit: mpsc::Sender<()>,
-    sigkill: mpsc::Sender<()>,
+    sigquit: mpsc::Sender<Option<A::Err>>,
+    sigkill: mpsc::Sender<Option<A::Err>>,
 }
 
 impl<A: Actor> Proxy<A> {
-    pub fn new(mailbox: mpsc::Sender<BoxLetter<A>>, sigquit: mpsc::Sender<()>, sigkill: mpsc::Sender<()>) -> Self {
+    pub fn new(mailbox: mpsc::Sender<BoxLetter<A>>, sigquit: mpsc::Sender<Option<A::Err>>, sigkill: mpsc::Sender<Option<A::Err>>) -> Self {
         Self { mailbox, sigquit, sigkill }
     }
 
@@ -41,23 +40,23 @@ impl<A: Actor> Proxy<A> {
         Ok(self.tell(msg).await?.await?)
     }
 
-    pub fn quit(&self) {
-        let _ = self.sigquit.try_send(());
+    pub fn quit(&self, err: Option<A::Err>) {
+        let _ = self.sigquit.try_send(err);
     }
 
-    pub fn kill(&self) {
-        let _ = self.sigkill.try_send(());
+    pub fn kill(&self, err: Option<A::Err>) {
+        let _ = self.sigkill.try_send(err);
     }
 }
 
 impl<A: Actor> Default for Proxy<A> {
     fn default() -> Self {
-        static DUMMY: LazyLock<mpsc::Sender<()>> = LazyLock::new(|| mpsc::channel(1).0);
+        let dummy = mpsc::channel::<Option<A::Err>>(1).0;
 
         Self {
             mailbox: mpsc::channel(1).0,
-            sigquit: DUMMY.clone(),
-            sigkill: DUMMY.clone(),
+            sigquit: dummy.clone(),
+            sigkill: dummy.clone(),
         }
     }
 }

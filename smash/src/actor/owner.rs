@@ -16,16 +16,16 @@ pub struct Owner<A: Actor> {
     proxy: Proxy<A>,
 
     mailbox: mpsc::Receiver<BoxLetter<A>>,
-    sigquit: mpsc::Receiver<()>,
-    sigkill: mpsc::Receiver<()>,
+    sigquit: mpsc::Receiver<Option<A::Err>>,
+    sigkill: mpsc::Receiver<Option<A::Err>>,
     sigstop: watch::Receiver<()>,
 }
 
 impl<A: Actor> Owner<A> {
     pub fn new(actor: A, sigstop: watch::Receiver<()>) -> (Self, Proxy<A>) {
         let (mailbox_tx, mailbox_rx) = mpsc::channel(1024);
-        let (sigquit_tx, sigquit_rx) = mpsc::channel(1);
-        let (sigkill_tx, sigkill_rx) = mpsc::channel(1);
+        let (sigquit_tx, sigquit_rx) = mpsc::channel::<Option<A::Err>>(1);
+        let (sigkill_tx, sigkill_rx) = mpsc::channel::<Option<A::Err>>(1);
 
         let proxy = Proxy::new(mailbox_tx, sigquit_tx, sigkill_tx);
         (Self { actor, proxy: proxy.clone(), mailbox: mailbox_rx, sigquit: sigquit_rx, sigkill: sigkill_rx, sigstop }, proxy)
@@ -47,7 +47,9 @@ impl<A: Actor> Owner<A> {
                     Err(err) => error = Some(err),
                 }
             }
-            _ = self.sigkill.recv() => {}
+            reason = self.sigkill.recv() => {
+                error = reason.flatten();
+            }
             _ = self.sigstop.changed() => {}
         }
 
@@ -55,8 +57,8 @@ impl<A: Actor> Owner<A> {
         while start {
             let letter = select! {
                 letter = self.mailbox.recv() => letter,
-                _ = self.sigquit.recv() => {
-                    match self.actor.stopping().await {
+                reason = self.sigquit.recv() => {
+                    match self.actor.stopping(reason.flatten()).await {
                         Ok(false) => continue,
                         Ok(true) => break,
                         Err(err) => {
@@ -65,7 +67,10 @@ impl<A: Actor> Owner<A> {
                         }
                     }
                 }
-                _ = self.sigkill.recv() => break,
+                reason = self.sigkill.recv() => {
+                    error = reason.flatten();
+                    break
+                }
                 _ = self.sigstop.changed() => break,
             };
 
@@ -75,7 +80,10 @@ impl<A: Actor> Owner<A> {
                         break;
                     }
                 }
-                _ = self.sigkill.recv() => break,
+                reason = self.sigkill.recv() => {
+                    error = reason.flatten();
+                    break
+                }
                 _ = self.sigstop.changed() => break,
             }
         }
