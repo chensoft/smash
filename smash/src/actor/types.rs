@@ -7,8 +7,8 @@ pub trait Actor: Sized + Send + 'static {
     type Err: Send + 'static;
 
     async fn started(&mut self, arg: Self::Arg) -> Result<(), Self::Err> { Ok(()) }
-    async fn stopping(&mut self, err: Option<Self::Err>) -> Result<bool, Self::Err> { Ok(true) }
-    async fn stopped(&mut self, err: Option<Self::Err>) {}
+    async fn stopping(&mut self, err: &Option<Self::Err>) -> Result<bool, Self::Err> { Ok(true) }
+    async fn stopped(&mut self, err: &Option<Self::Err>) {}
 }
 
 #[async_trait]

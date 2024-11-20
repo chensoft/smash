@@ -19,12 +19,12 @@ impl Actor for Echo {
         Ok(())
     }
 
-    async fn stopping(&mut self, err: Option<Self::Err>) -> Result<bool, Self::Err> {
+    async fn stopping(&mut self, err: &Option<Self::Err>) -> Result<bool, Self::Err> {
         println!("stopping {err:?}");
         Ok(true)
     }
 
-    async fn stopped(&mut self, err: Option<Self::Err>) {
+    async fn stopped(&mut self, err: &Option<Self::Err>) {
         println!("stopped {err:?}");
     }
 }

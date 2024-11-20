@@ -58,7 +58,8 @@ impl<A: Actor> Owner<A> {
             let letter = select! {
                 letter = self.mailbox.recv() => letter,
                 reason = self.sigquit.recv() => {
-                    match self.actor.stopping(reason.flatten()).await {
+                    error = reason.flatten();
+                    match self.actor.stopping(&error).await {
                         Ok(false) => continue,
                         Ok(true) => break,
                         Err(err) => {
@@ -88,7 +89,7 @@ impl<A: Actor> Owner<A> {
             }
         }
 
-        self.actor.stopped(error).await;
+        self.actor.stopped(&error).await;
     }
 
     async fn poll(actor: &mut A, letter: Option<BoxLetter<A>>) -> bool {
