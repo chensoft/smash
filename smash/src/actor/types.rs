@@ -16,6 +16,11 @@ pub trait Handler<M: Send + 'static> {
     type Output: Send + 'static;
 
     async fn handle(&mut self, msg: M) -> Self::Output;
+
+    #[inline]
+    async fn filter(&mut self, out: Self::Output) -> Self::Output {
+        out
+    }
 }
 
 #[async_trait]
@@ -55,7 +60,8 @@ where
             return;
         };
 
-        let ret = act.handle(msg).await;
+        let out = act.handle(msg).await;
+        let ret = act.filter(out).await;
 
         if let Some(snd) = self.snd.take() {
             let _ = snd.send(ret);
